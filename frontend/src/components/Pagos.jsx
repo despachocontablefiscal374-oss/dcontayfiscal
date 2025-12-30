@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 
 export default function Pagos() {
   //FISTROS PARA EL DASHBOARD
-  const API_URL = import.meta.env.VITE_API_URL || "";
+  const API_URL = import.meta.env.VITE_API_URL;
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const filtro = queryParams.get("filtro");

@@ -43,7 +43,7 @@ export default function Recordatorios() {
   const [usuarioAdmin, setUsuarioAdmin] = useState(null);
 
   // correo
-  const API_URL = "http://localhost:4001";
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // UI
   const [loading, setLoading] = useState(true);

@@ -12,7 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 
 export default function RegistrarAsistente() {
-    const API_URL = "http://localhost:3000/api";
+    const API_URL = import.meta.env.VITE_API_URL;
 
     const navigate = useNavigate();
     const [asistentes, setAsistentes] = useState([]);
@@ -32,7 +32,7 @@ export default function RegistrarAsistente() {
     // Cargar asistentes
     useEffect(() => {
         const fetchAsistentes = async () => {
-            const res = await fetch(`${API_URL}/usuarios`);
+            const res = await fetch(`${API_URL}/api/usuarios`);
             const data = await res.json();
             setAsistentes(data);
         };
@@ -56,7 +56,7 @@ export default function RegistrarAsistente() {
         try {
             if (editingAsistente) {
                 // EDITAR
-                await fetch(`${API_URL}/usuarios`, {
+                await fetch(`${API_URL}/api/usuarios`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -67,7 +67,7 @@ export default function RegistrarAsistente() {
 
             } else {
                 // CREAR
-                await fetch(`${API_URL}/usuarios`, {
+                await fetch(`${API_URL}/api/usuarios`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(formData),
@@ -85,7 +85,7 @@ export default function RegistrarAsistente() {
             });
 
             // Recargar tabla
-            const res = await fetch(`${API_URL}/usuarios`);
+            const res = await fetch(`${API_URL}/api/usuarios`);
             setAsistentes(await res.json());
         } catch (error) {
             toast.error("Error al guardar usuario");
@@ -143,7 +143,7 @@ export default function RegistrarAsistente() {
     const handleDelete = (uid) => {
         confirmDeleteToast(async () => {
             try {
-            await fetch(`${API_URL}/usuarios?uid=${uid}`, {
+            await fetch(`${API_URL}/api/usuarios?uid=${uid}`, {
                 method: "DELETE",
             });
 
