@@ -59,7 +59,6 @@ const monthNames = [
 export default function Panel() {
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
-  //console.log("API_URL =>", import.meta.env.VITE_API_URL);
 
   const [clientes, setClientes] = useState([]);
   const [pagos, setPagos] = useState([]);
