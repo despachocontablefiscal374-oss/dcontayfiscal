@@ -1836,9 +1836,6 @@ export default function Pagos() {
                     <Col md={6}>
                       <h6>{getClientById(viewPago.clienteId)?.nombre || viewPago.clienteNombre || "Cliente no encontrado"}</h6>
                       <div className="text-muted small">{getClientById(viewPago.clienteId)?.email || viewPago.clienteEmail || ""}</div>
-                      <div className="text-muted small">
-                        Clienteid (directo): {viewPago.clienteId}
-                      </div>
                       <div className="text-muted small">RFC: {getClientById(viewPago.clienteId)?.rfc || "-"}</div>
                       <div className="text-muted small">Régimen: {getClientById(viewPago.clienteId)?.regimenFiscal || viewPago.clienteRegimen || "-"}</div>
                     </Col>

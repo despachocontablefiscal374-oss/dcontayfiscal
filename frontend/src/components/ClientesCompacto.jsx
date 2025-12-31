@@ -407,15 +407,31 @@ export default function ClientesCompacto() {
 
         rows.forEach((row) => {
           const cliente = {
-            nombre: row.Nombre || "",
-            email: row.Email || "",
-            telefono: row.Telefono || "",
-            rfc: row.RFC || "",
-            regimenFiscal: row["Régimen Fiscal"] || "",
-            estado: row.Estado || "Activo",
-            notas: row.Notas || "",
+            nombre: 
+              row.Nombre || 
+              row.nombre || 
+              "",
+            email: 
+              row.Email || 
+              row.email ||
+              row.correo || 
+              "",
+            telefono:
+              row.Teléfono ||
+              row.Telefono ||
+              row.telefono ||
+              "",
+            rfc: row.RFC || row.rfc || "",
+            regimenFiscal:
+              row["Régimen Fiscal"] ||
+              row["Regimen Fiscal"] ||
+              row.regimenFiscal ||
+              "",
+            estado: row.Estado || row.estado || "Activo",
+            notas: row.Notas || row.notas || "",
             fechaCreacion: new Date().toLocaleDateString(),
           };
+
 
           // 🔍 Validar duplicados SOLO por nombre, email, rfc o teléfono
           const existe =
@@ -920,7 +936,6 @@ export default function ClientesCompacto() {
 
               <Row className="mb-3">
                 <Col md={6}>
-                  <p><strong>Id:</strong> {selectedCliente.id}</p>
                   <p><strong>Email:</strong> {selectedCliente.email}</p>
                   <p><strong>Teléfono:</strong> {selectedCliente.telefono}</p>
                   <p><strong>RFC:</strong> {selectedCliente.rfc}</p>
