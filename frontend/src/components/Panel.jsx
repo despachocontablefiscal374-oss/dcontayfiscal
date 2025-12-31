@@ -1052,7 +1052,6 @@ export default function Panel() {
                 <th>Teléfono</th>
                 <th>Mes</th>
                 <th>Estatus</th>
-                <th>Acción</th>
               </tr>
             </thead>
 
