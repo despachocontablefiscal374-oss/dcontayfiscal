@@ -44,6 +44,15 @@ export default function ClientesCompacto() {
     }
   };
 
+  const existeDuplicado = (cliente, clientesExistentes) => {
+    return clientesExistentes.some((c) =>
+      c.nombre?.toLowerCase() === cliente.nombre?.toLowerCase() ||
+      c.email?.toLowerCase() === cliente.email?.toLowerCase() ||
+      c.telefono === cliente.telefono ||
+      c.rfc?.toLowerCase() === cliente.rfc?.toLowerCase()
+    );
+  };
+
   const handleExport = async () => {
     // Filtra los datos según el estado seleccionado
     let filteredClients = [...clientes];
@@ -386,43 +395,67 @@ export default function ClientesCompacto() {
 
     try {
       const reader = new FileReader();
+
       reader.onload = async (event) => {
         const data = new Uint8Array(event.target.result);
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet);
 
-        // Mapeamos columnas esperadas
-        const nuevosClientes = rows.map((row) => ({
-          nombre: row.Nombre || "",
-          email: row.Email || "",
-          telefono: row.Telefono || "",
-          estado: row.Estado || "Activo",
-          rfc: row.RFC || "",
-          regimenFiscal: row["Régimen Fiscal"] || "",
-          metodoPago: row["Método de Pago"] || "",
-          periodicidad: row.Periodicidad || "Mensual",
-          notas: row.Notas || "",
-          fechaCreacion: new Date().toLocaleDateString(),
-        }));
+        let nuevosClientes = [];
+        let duplicados = [];
 
-        // Guardar en Firestore
+        rows.forEach((row) => {
+          const nuevoCliente = {
+            nombre: row.Nombre || "",
+            email: row.Email || "",
+            telefono: row.Telefono || "",
+            estado: row.Estado || "Activo",
+            rfc: row.RFC || "",
+            regimenFiscal: row["Régimen Fiscal"] || "",
+            metodoPago: row["Método de Pago"] || "",
+            notas: row.Notas || "",
+            fechaCreacion: new Date().toLocaleDateString(),
+          };
+
+          // 🔍 Validar duplicados contra BD y contra el mismo Excel
+          const existe =
+            existeDuplicado(nuevoCliente, clientes) ||
+            existeDuplicado(nuevoCliente, nuevosClientes);
+
+          if (existe) {
+            duplicados.push(nuevoCliente);
+          } else {
+            nuevosClientes.push(nuevoCliente);
+          }
+        });
+
+        // Guardar SOLO los válidos
         for (const cliente of nuevosClientes) {
           await addDoc(collection(db, "clientes"), cliente);
         }
 
         setClientes([...clientes, ...nuevosClientes]);
-        //alert(`✅ Se importaron ${nuevosClientes.length} clientes correctamente.`);
-        toast.success(`Se importaron ${nuevosClientes.length} clientes correctamente`);
+
+        // Mensajes claros
+        if (duplicados.length > 0) {
+          toast.warning(
+            `⚠️ ${duplicados.length} clientes fueron omitidos por estar duplicados`
+          );
+        }
+
+        if (nuevosClientes.length > 0) {
+          toast.success(`✅ ${nuevosClientes.length} clientes importados correctamente`);
+        }
       };
 
       reader.readAsArrayBuffer(file);
     } catch (error) {
       console.error("Error al importar Excel:", error);
-      //alert("❌ Error al importar el archivo. Verifica el formato.");
-      toast.error("Error al importar el archivo. Verifica el formato");
+      toast.error("Error al importar el archivo");
     }
   };
+
 
   // abrir modal en modo edición
   const handleEdit = (cliente) => {
