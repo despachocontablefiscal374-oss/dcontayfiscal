@@ -1076,11 +1076,6 @@ export default function Panel() {
                       <td>
                         <Badge bg="danger">Atrasados</Badge>
                       </td>
-                      <td>
-                        <Button disabled={enviandoCorreos} size="sm" variant="outline-danger" onClick={() => enviarAviso(p)}>
-                          Enviar Aviso
-                        </Button>
-                      </td>
                     </tr>
                   );
                 })
