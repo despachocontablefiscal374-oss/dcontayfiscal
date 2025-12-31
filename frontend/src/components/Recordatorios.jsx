@@ -43,7 +43,7 @@ export default function Recordatorios() {
   const [usuarioAdmin, setUsuarioAdmin] = useState(null);
 
   // correo
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
   // UI
   const [loading, setLoading] = useState(true);

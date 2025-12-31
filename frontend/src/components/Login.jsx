@@ -8,7 +8,7 @@ export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -33,10 +33,6 @@ export default function Login({ onLogin }) {
       });
 
       const data = await response.json();
-      //console.log("RESPUESTA BACKEND:", data);
-      //console.log("STATUS:", response.status);
-      //console.log("DATA:", data);
-
 
       if (!response.ok) {
         setError(data.message || "Error de autenticación");
