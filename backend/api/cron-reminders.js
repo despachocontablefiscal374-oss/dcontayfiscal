@@ -54,6 +54,9 @@ export default async function handler(req, res) {
       const fechaVenc = parseFlexibleDate(pago.fechaVencimiento);
       if (!fechaVenc) continue;
 
+      // 🔥 CLAVE: normalizar fecha
+      fechaVenc.setHours(0, 0, 0, 0);
+
       const diasAntes = daysDiff(hoy, fechaVenc);
       const diasDespues = daysDiff(fechaVenc, hoy);
 
