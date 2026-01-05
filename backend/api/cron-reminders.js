@@ -35,6 +35,9 @@ export default async function handler(req, res) {
     const plantillaRecordatorio = plantillas.find(
       p => p.tipo === "recordatorio" && p.activa
     );
+    const plantillaAviso = plantillas.find(
+      p => p.tipo === "aviso" && p.activa
+    );
 
     if (!plantillaRecordatorio) return res.json({ ok: true });
 
@@ -49,9 +52,50 @@ export default async function handler(req, res) {
       if (!fechaVenc) continue;
 
       const diasAntes = daysDiff(hoy, fechaVenc);
+      const diasDespues = daysDiff(fechaVenc, hoy);
 
       // ⏰ Recordatorio 3 días antes
       if (diasAntes !== 3) continue;
+
+
+      // 🔔 RECORDATORIO: 3 días antes
+      if (diasAntes === 3 && plantillaRecordatorio) {
+        const yaEnviado = await alreadySent(
+          pago.id,
+          "recordatorio",
+          cliente.email
+        );
+
+        if (!yaEnviado) {
+          await sendMailFromTemplate(
+            adminData,
+            plantillaRecordatorio,
+            pagoConCliente
+          );
+        }
+      }
+
+      // ⚠️ AVISO: 3 días después del vencimiento
+      if (diasDespues === 3 && plantillaAviso) {
+        const yaEnviado = await alreadySent(
+          pago.id,
+          "avisos",
+          cliente.email
+        );
+
+        if (!yaEnviado) {
+          await sendMailFromTemplate(
+            adminData,
+            plantillaAviso,
+            pagoConCliente
+          );
+        }
+      }
+
+
+
+
+
 
       /* ================= CLIENTE ================= */
       const clienteSnap = await db
