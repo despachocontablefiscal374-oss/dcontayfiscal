@@ -130,7 +130,7 @@ export default function Panel() {
   const pagosValidos = useMemo(() => {
     return pagos.filter(p => {
       const cliente = clientesMap[p.clienteId];
-      return cliente && cliente.estado === "Activo";
+      return !!cliente; // solo que el cliente exista
     });
   }, [pagos, clientesMap]);
 
@@ -561,7 +561,7 @@ export default function Panel() {
         if (enviandoCorreos) return;
 
         setEnviandoCorreos(true);
-        
+
         toast.info("Enviando correos, por favor espera...", {
             autoClose: false,
             toastId: "sending-mails"
