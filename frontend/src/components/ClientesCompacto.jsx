@@ -265,25 +265,43 @@ export default function ClientesCompacto() {
 
   // 🧾 Validar RFC con formato oficial SAT
   const validarRFC = (rfc) => {
+    if (!rfc) return false;
     const regex = /^([A-ZÑ&]{3,4})\d{6}([A-Z\d]{3})$/i;
-    return regex.test(rfc.trim());
+    return regex.test(String(rfc).trim());
   };
 
   // ✉️ Validar formato de correo
   const validarEmail = (email) => {
+    if (!email) return false;
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email.trim());
+    return regex.test(String(email).trim());
   };
 
   // 📞 Validar formato de teléfono (solo dígitos, mínimo 8)
   const validarTelefono = (tel) => {
+  if (!tel) return false;
     const regex = /^[0-9]{8,15}$/;
-    return regex.test(tel.trim());
+    return regex.test(String(tel).trim());
   };
 
   // VALIDACIONES
   const validarFormulario = () => {
-    const nuevosErrores = {};
+    const nombreStr = String(nombre || "").trim();
+    const emailStr = String(email || "").trim();
+    const telefonoStr = String(telefono || "").trim();
+    const rfcStr = String(rfc || "").trim();
+
+    if (!nombreStr) nuevosErrores.nombre = "El nombre es obligatorio.";
+    if (!emailStr) nuevosErrores.email = "El correo electrónico es obligatorio.";
+    else if (!validarEmail(emailStr)) nuevosErrores.email = "El formato del correo no es válido.";
+
+    if (!telefonoStr) nuevosErrores.telefono = "El teléfono es obligatorio.";
+    else if (!validarTelefono(telefonoStr)) nuevosErrores.telefono = "Solo se permiten números (8–15 dígitos).";
+
+    if (!rfcStr) nuevosErrores.rfc = "El RFC es obligatorio.";
+    else if (!validarRFC(rfcStr)) nuevosErrores.rfc = "El RFC no tiene un formato válido.";
+
+    /*const nuevosErrores = {};
     const { nombre, email, telefono, rfc } = formData;
 
     // 🔍 Validaciones
@@ -296,7 +314,7 @@ export default function ClientesCompacto() {
 
     if (!rfc.trim()) nuevosErrores.rfc = "El RFC es obligatorio.";
     else if (!validarRFC(rfc)) nuevosErrores.rfc = "El RFC no tiene un formato válido.";
-
+  */
     // 🚫 Validar duplicados (excepto si se edita el mismo cliente)
     const duplicado = clientes.find(
       (c) =>
@@ -404,21 +422,18 @@ export default function ClientesCompacto() {
 
         rows.forEach((row) => {
           const cliente = {
-            nombre: 
-              row.Nombre || 
-              row.nombre || 
-              "",
-            email: 
-              row.Email || 
-              row.email ||
-              row.correo || 
-              "",
-            telefono:
+            telefono: String(
               row.Teléfono ||
               row.Telefono ||
               row.telefono ||
-              "",
-            rfc: row.RFC || row.rfc || "",
+              ""
+            ).replace(/\D/g, ""),
+
+            rfc: String(row.RFC || row.rfc || "").toUpperCase(),
+
+            email: String(row.Email || row.email || row.correo || "").trim(),
+
+            nombre: String(row.Nombre || row.nombre || "").trim(),
             regimenFiscal:
               row["Régimen Fiscal"] ||
               row["Regimen Fiscal"] ||
