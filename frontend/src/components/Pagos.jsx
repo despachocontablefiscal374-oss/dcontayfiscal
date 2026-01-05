@@ -1085,7 +1085,7 @@ export default function Pagos() {
       let clsText = "";
       if (general === "Cumplido") clsText = "[OK]";
       if (general === "Puntual") clsText = "[A TIEMPO]";
-      if (general === "Moroso") clsText = "[ATRASADO]";
+      if (general === "Moroso");
       if (general === "Pendiente") clsText = "[PENDIENTE]";
       doc2.setFontSize(12);
       doc2.setTextColor(0, 0, 0);
