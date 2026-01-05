@@ -286,59 +286,61 @@ export default function ClientesCompacto() {
 
   // VALIDACIONES
   const validarFormulario = () => {
-    const nombreStr = String(nombre || "").trim();
-    const emailStr = String(email || "").trim();
-    const telefonoStr = String(telefono || "").trim();
-    const rfcStr = String(rfc || "").trim();
+    const nuevosErrores = {};
 
+    const nombreStr = String(formData.nombre || "").trim();
+    const emailStr = String(formData.email || "").trim();
+    const telefonoStr = String(formData.telefono || "").trim();
+    const rfcStr = String(formData.rfc || "").trim();
+
+    // 🔍 Validaciones básicas
     if (!nombreStr) nuevosErrores.nombre = "El nombre es obligatorio.";
-    if (!emailStr) nuevosErrores.email = "El correo electrónico es obligatorio.";
-    else if (!validarEmail(emailStr)) nuevosErrores.email = "El formato del correo no es válido.";
 
-    if (!telefonoStr) nuevosErrores.telefono = "El teléfono es obligatorio.";
-    else if (!validarTelefono(telefonoStr)) nuevosErrores.telefono = "Solo se permiten números (8–15 dígitos).";
+    if (!emailStr) {
+      nuevosErrores.email = "El correo electrónico es obligatorio.";
+    } else if (!validarEmail(emailStr)) {
+      nuevosErrores.email = "El formato del correo no es válido.";
+    }
 
-    if (!rfcStr) nuevosErrores.rfc = "El RFC es obligatorio.";
-    else if (!validarRFC(rfcStr)) nuevosErrores.rfc = "El RFC no tiene un formato válido.";
+    if (!telefonoStr) {
+      nuevosErrores.telefono = "El teléfono es obligatorio.";
+    } else if (!validarTelefono(telefonoStr)) {
+      nuevosErrores.telefono = "Solo se permiten números (8–15 dígitos).";
+    }
 
-    /*const nuevosErrores = {};
-    const { nombre, email, telefono, rfc } = formData;
+    if (!rfcStr) {
+      nuevosErrores.rfc = "El RFC es obligatorio.";
+    } else if (!validarRFC(rfcStr)) {
+      nuevosErrores.rfc = "El RFC no tiene un formato válido.";
+    }
 
-    // 🔍 Validaciones
-    if (!nombre.trim()) nuevosErrores.nombre = "El nombre es obligatorio.";
-    if (!email.trim()) nuevosErrores.email = "El correo electrónico es obligatorio.";
-    else if (!validarEmail(email)) nuevosErrores.email = "El formato del correo no es válido.";
-
-    if (!telefono.trim()) nuevosErrores.telefono = "El teléfono es obligatorio.";
-    else if (!validarTelefono(telefono)) nuevosErrores.telefono = "Solo se permiten números (8–15 dígitos).";
-
-    if (!rfc.trim()) nuevosErrores.rfc = "El RFC es obligatorio.";
-    else if (!validarRFC(rfc)) nuevosErrores.rfc = "El RFC no tiene un formato válido.";
-  */
-    // 🚫 Validar duplicados (excepto si se edita el mismo cliente)
+    // 🚫 Validar duplicados (excepto el mismo cliente en edición)
     const duplicado = clientes.find(
       (c) =>
-        (c.nombre.toLowerCase() === nombre.toLowerCase() ||
-          c.email.toLowerCase() === email.toLowerCase() ||
-          c.telefono === telefono ||
-          c.rfc.toLowerCase() === rfc.toLowerCase()) &&
+        (
+          c.nombre?.toLowerCase() === nombreStr.toLowerCase() ||
+          c.email?.toLowerCase() === emailStr.toLowerCase() ||
+          c.telefono === telefonoStr ||
+          c.rfc?.toLowerCase() === rfcStr.toLowerCase()
+        ) &&
         (!editingCliente || c.id !== editingCliente.id)
     );
 
     if (duplicado) {
-      if (duplicado.nombre.toLowerCase() === nombre.toLowerCase())
+      if (duplicado.nombre?.toLowerCase() === nombreStr.toLowerCase())
         nuevosErrores.nombre = "Ya existe un cliente con este nombre.";
-      if (duplicado.email.toLowerCase() === email.toLowerCase())
+      if (duplicado.email?.toLowerCase() === emailStr.toLowerCase())
         nuevosErrores.email = "Este correo ya está registrado.";
-      if (duplicado.telefono === telefono)
+      if (duplicado.telefono === telefonoStr)
         nuevosErrores.telefono = "Este teléfono ya está registrado.";
-      if (duplicado.rfc.toLowerCase() === rfc.toLowerCase())
+      if (duplicado.rfc?.toLowerCase() === rfcStr.toLowerCase())
         nuevosErrores.rfc = "Este RFC ya está registrado.";
     }
 
     setErrores(nuevosErrores);
-    return Object.keys(nuevosErrores).length === 0; // ✅ sin errores
+    return Object.keys(nuevosErrores).length === 0;
   };
+
 
   // Guardar o actualizar cliente
   const handleSubmit = async (e) => {
@@ -423,17 +425,17 @@ export default function ClientesCompacto() {
         rows.forEach((row) => {
           const cliente = {
             telefono: String(
-              row.Teléfono ||
-              row.Telefono ||
-              row.telefono ||
-              ""
-            ).replace(/\D/g, ""),
+            row.Teléfono ||
+            row.Telefono ||
+            row.telefono ||
+            ""
+          ).replace(/\D/g, ""),
 
-            rfc: String(row.RFC || row.rfc || "").toUpperCase(),
+          rfc: String(row.RFC || row.rfc || "").toUpperCase(),
 
-            email: String(row.Email || row.email || row.correo || "").trim(),
+          email: String(row.Email || row.email || row.correo || "").trim(),
 
-            nombre: String(row.Nombre || row.nombre || "").trim(),
+          nombre: String(row.Nombre || row.nombre || "").trim(),
             regimenFiscal:
               row["Régimen Fiscal"] ||
               row["Regimen Fiscal"] ||

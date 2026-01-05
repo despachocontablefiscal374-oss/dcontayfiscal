@@ -2,6 +2,7 @@ import { useState } from "react";
 import { auth } from "../firebaseConfig"; // asegúrate de tener Firestore inicializado
 import { signInWithEmailAndPassword } from "firebase/auth";
 import logo from "../assets/logo.png";
+import { useNavigate } from "react-router-dom";
 
 
 export default function Login({ onLogin }) {
@@ -9,6 +10,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -46,6 +48,11 @@ export default function Login({ onLogin }) {
         uid: data.uid,
         nombreUsuario: data.nombreUsuario,
       });
+
+      const redirect = localStorage.getItem("redirectAfterLogin") || "/dashboard";
+      localStorage.removeItem("redirectAfterLogin");
+      navigate(redirect, { replace: true });
+
 
     } catch (err) {
       console.error(err);
