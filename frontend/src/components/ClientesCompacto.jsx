@@ -334,6 +334,43 @@ export default function ClientesCompacto() {
     return Object.keys(nuevosErrores).length === 0;
   };
 
+  //
+  const reactivarPagoMesActual = async (clienteId) => {
+    const mesActual = new Date().toISOString().slice(0, 7);
+    const hoy = new Date();
+
+    const pagosRef = collection(db, "pagos");
+    const q = query(
+      pagosRef,
+      where("clienteId", "==", clienteId),
+      where("mes", "==", mesActual)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) return;
+
+    const pagoDoc = snapshot.docs[0];
+    const pago = pagoDoc.data();
+
+    // 🔒 Nunca tocar pagos ya pagados
+    if (pago.estatus === "Pagado") return;
+
+    // Solo si estaba Inactivo
+    if (pago.estatus !== "Inactivo") return;
+
+    const fechaVencimiento = new Date(pago.fechaVencimiento);
+
+    const nuevoEstado =
+      hoy > fechaVencimiento ? "Vencido" : "Pendiente";
+
+    await updateDoc(doc(db, "pagos", pagoDoc.id), {
+      estatus: nuevoEstado,
+      fechaCambioEstado: new Date(),
+      motivo: "Cliente reactivado",
+    });
+  };
+
 
   // Guardar o actualizar cliente
   const handleSubmit = async (e) => {
