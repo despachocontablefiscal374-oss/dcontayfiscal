@@ -1083,10 +1083,10 @@ export default function Pagos() {
       // Clasificación general
       doc2.setFont("helvetica", "bold");
       let clsText = "";
-      if (general === "Cumplido") clsText = "[OK]";
-      if (general === "Puntual") clsText = "[A TIEMPO]";
+      if (general === "Cumplido");
+      if (general === "Puntual");
       if (general === "Moroso");
-      if (general === "Pendiente") clsText = "[PENDIENTE]";
+      if (general === "Pendiente");
       doc2.setFontSize(12);
       doc2.setTextColor(0, 0, 0);
       doc2.text(`Clasificación general: ${clsText} ${general}`, pageWidth - 14, 36, { align: "right" });
