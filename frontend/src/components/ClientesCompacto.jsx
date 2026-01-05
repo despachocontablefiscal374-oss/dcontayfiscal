@@ -164,7 +164,6 @@ export default function ClientesCompacto() {
       "Estado",
       "Teléfono",
       "Régimen Fiscal",
-      "Método de Pago",
       "Notas",
     ];
 
@@ -175,7 +174,6 @@ export default function ClientesCompacto() {
       c.estado || "",
       c.telefono || "",
       c.regimenFiscal || "",
-      c.metodoPago || "",
       c.notas || "",
     ]);
 
