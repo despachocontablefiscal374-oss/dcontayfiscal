@@ -55,27 +55,38 @@ function Dashboard({ onLogout, role }) {
         const monto = Number(data.monto) || 0;
         const estatus = (data.estatus || "").toLowerCase();
 
-        // 🔹 TOTAL DEL MES
-        if (data.mes === mesActual) {
+        const fechaVenc = data.fechaVencimiento
+          ? new Date(data.fechaVencimiento)
+          : null;
+
+        const mesPago =
+          fechaVenc &&
+          `${fechaVenc.getFullYear()}-${String(fechaVenc.getMonth() + 1).padStart(2, "0")}`;
+
+        // 🔹 TOTAL DEL MES (todos los pagos del mes actual)
+        if (mesPago === mesActual) {
           totalMes += monto;
         }
 
-        // 🔹 CLASIFICACIÓN POR ESTATUS (SIN FECHA)
+        // 🔹 PAGADO
         if (estatus === "pagado") {
           totalPagado += monto;
           return;
         }
 
-        if (estatus === "pendiente") {
+        // 🔹 PENDIENTE (SOLO DEL MES ACTUAL)
+        if (estatus === "pendiente" && mesPago === mesActual) {
           pagosPendientes += monto;
           return;
         }
 
-        if (estatus === "vencido") {
+        // 🔹 VENCIDO (SOLO DEL MES ACTUAL)
+        if (estatus === "vencido" && mesPago === mesActual) {
           pagosVencidos += monto;
           return;
         }
       });
+
 
       setStats({
         totalPagado,
