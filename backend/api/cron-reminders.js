@@ -35,11 +35,14 @@ export default async function handler(req, res) {
     const plantillaRecordatorio = plantillas.find(
       p => p.tipo === "recordatorio" && p.activa
     );
+
     const plantillaAviso = plantillas.find(
       p => p.tipo === "aviso" && p.activa
     );
 
-    if (!plantillaRecordatorio) return res.json({ ok: true });
+    if (!plantillaRecordatorio && !plantillaAviso) {
+      return res.json({ ok: true });
+    }
 
     /* ================= PAGOS ================= */
     const pagos = (await db.collection("pagos").get())
@@ -53,49 +56,6 @@ export default async function handler(req, res) {
 
       const diasAntes = daysDiff(hoy, fechaVenc);
       const diasDespues = daysDiff(fechaVenc, hoy);
-
-      // ⏰ Recordatorio 3 días antes
-      if (diasAntes !== 3) continue;
-
-
-      // 🔔 RECORDATORIO: 3 días antes
-      if (diasAntes === 3 && plantillaRecordatorio) {
-        const yaEnviado = await alreadySent(
-          pago.id,
-          "recordatorio",
-          cliente.email
-        );
-
-        if (!yaEnviado) {
-          await sendMailFromTemplate(
-            adminData,
-            plantillaRecordatorio,
-            pagoConCliente
-          );
-        }
-      }
-
-      // ⚠️ AVISO: 3 días después del vencimiento
-      if (diasDespues === 3 && plantillaAviso) {
-        const yaEnviado = await alreadySent(
-          pago.id,
-          "avisos",
-          cliente.email
-        );
-
-        if (!yaEnviado) {
-          await sendMailFromTemplate(
-            adminData,
-            plantillaAviso,
-            pagoConCliente
-          );
-        }
-      }
-
-
-
-
-
 
       /* ================= CLIENTE ================= */
       const clienteSnap = await db
@@ -113,22 +73,43 @@ export default async function handler(req, res) {
         clienteNombre: cliente.nombre,
       };
 
-      const yaEnviado = await alreadySent(
-        pago.id,
-        "recordatorio",
-        cliente.email
-      );
-
-      if (!yaEnviado) {
-        await sendMailFromTemplate(
-          adminData,
-          plantillaRecordatorio,
-          pagoConCliente
+      /* 🔔 RECORDATORIO: 3 días antes */
+      if (diasAntes === 3 && plantillaRecordatorio) {
+        const yaEnviado = await alreadySent(
+          pago.id,
+          "recordatorio",
+          cliente.email
         );
+
+        if (!yaEnviado) {
+          await sendMailFromTemplate(
+            adminData,
+            plantillaRecordatorio,
+            pagoConCliente
+          );
+        }
+      }
+
+      /* ⚠️ AVISO: 3 días después */
+      if (diasDespues === 3 && plantillaAviso) {
+        const yaEnviado = await alreadySent(
+          pago.id,
+          "aviso",
+          cliente.email
+        );
+
+        if (!yaEnviado) {
+          await sendMailFromTemplate(
+            adminData,
+            plantillaAviso,
+            pagoConCliente
+          );
+        }
       }
     }
 
     return res.json({ ok: true });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
