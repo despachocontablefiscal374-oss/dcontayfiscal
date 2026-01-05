@@ -70,11 +70,11 @@ export default function Pagos() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // obtener los clientes activos
-  const clientesActivos = clientes.filter((c) =>
+  /*const clientesActivos = clientes.filter((c) =>
     (c.estado || c.estado === undefined ? (c.estado || "Activo") : c.estado)
       .toString()
       .toLowerCase() === "activo"
-  );
+  );*/
 
   // modal / form
   const [showExportModal, setShowExportModal] = useState(false);
@@ -337,10 +337,10 @@ export default function Pagos() {
       const snapPagos = await getDocs(qPagos);
       const clientesRef = collection(db, "clientes");
       const clientesSnapshot = await getDocs(clientesRef);
-      const clientesActivos = clientesSnapshot.docs
+      /*const clientesActivos = clientesSnapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
         .filter((c) => c.estado?.toLowerCase() === "activo");
-
+      */
       //console.log("🟢 Clientes activos:", clientesActivos.length);
 
       // 2️⃣ Obtener todos los pagos existentes
@@ -542,7 +542,7 @@ export default function Pagos() {
     }
     const q = clienteQuery.trim().toLowerCase();
     const matches = clientes
-      .filter((c) => (c.estado || "").toLowerCase() === "activo")
+      //.filter((c) => (c.estado || "").toLowerCase() === "activo")
       .filter((c) => {
         const hayNombre = (c.nombre || "").toLowerCase().includes(q);
         const hayEmail = ("").toLowerCase().includes(q);
