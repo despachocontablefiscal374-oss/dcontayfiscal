@@ -3,7 +3,7 @@ import { Button, Form, Table, Badge, Modal, Toast, ToastContainer, Offcanvas, Co
 import { ArrowLeft, Plus, Download, Phone, Eye, Edit, Trash2, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebaseConfig";
-import { collection, getDocs, updateDoc, addDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, addDoc, doc, query, where } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import Navbar from "./Navbar";
 import jsPDF from "jspdf";
@@ -33,16 +33,9 @@ export default function ClientesCompacto() {
   const [estadoFilter, setEstadoFilter] = useState("Todos los estados");
   const [pagoFilter, setPagoFilter] = useState("Todos los métodos de pago");
   const [regimenFilter, setRegimenFilter] = useState("Todos los regímenes fiscales");
-
+  
   const [exportFormat, setExportFormat] = useState("excel");
   const [exportFilter, setExportFilter] = useState("todos");
-
-  const handleGuardar = () => {
-    if (!usuarioAdmin || usuarioAdmin.role !== "admin") {
-      setError("No tienes permisos para realizar esta acción.");
-      return;
-    }
-  };
 
   const existeDuplicado = (cliente, lista) => {
     return lista.some((c) =>
@@ -346,16 +339,36 @@ export default function ClientesCompacto() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validarFormulario()) return;
+
     try {
       if (editingCliente) {
+        // 🔥 Activo → Inactivo
+        if (
+          editingCliente.estado !== "Inactivo" &&
+          formData.estado === "Inactivo"
+        ) {
+          await marcarPagoMesComoInactivo(editingCliente.id);
+        }
+
+        // 🔁 Inactivo → Activo
+        const dataToUpdate = { ...formData };
+        if (
+          editingCliente.estado === "Inactivo" &&
+          formData.estado === "Activo"
+        ) {
+          dataToUpdate.fechaReactivacion = new Date();
+        }
+
         const docRef = doc(db, "clientes", editingCliente.id);
-        await updateDoc(docRef, formData);
+        await updateDoc(docRef, dataToUpdate);
+
         setClientes(
           clientes.map((c) =>
-            c.id === editingCliente.id ? { ...c, ...formData } : c
+            c.id === editingCliente.id ? { ...c, ...dataToUpdate } : c
           )
         );
       } else {
+        // ➕ Nuevo cliente
         const docRef = await addDoc(collection(db, "clientes"), formData);
         setClientes([...clientes, { id: docRef.id, ...formData }]);
       }
@@ -386,16 +399,52 @@ export default function ClientesCompacto() {
     setShowConfirm(true);
   };
 
+  const marcarPagoMesComoInactivo = async (clienteId) => {
+    try {
+      // Mes actual en formato YYYY-MM
+      const mesActual = new Date().toISOString().slice(0, 7);
+
+      const pagosRef = collection(db, "pagos");
+      const q = query(
+        pagosRef,
+        where("clienteId", "==", clienteId),
+        where("mes", "==", mesActual)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const pagoDoc = snapshot.docs[0];
+        await updateDoc(doc(db, "pagos", pagoDoc.id), {
+          estatus: "Inactivo",
+          motivo: "Cliente inactivo",
+          fechaCambioEstado: new Date(),
+        });
+      }
+    } catch (error) {
+      console.error("Error al marcar pago como Inactivo:", error);
+    }
+  };
+
   const confirmArchive = async () => {
     if (!clienteToArchive) return;
+
     try {
       const clienteRef = doc(db, "clientes", clienteToArchive.id);
+
+      // 1️⃣ Marcar cliente como Inactivo
       await updateDoc(clienteRef, { estado: "Inactivo" });
+
+      // 2️⃣ 🔥 Marcar el pago del mes actual como Inactivo
+      await marcarPagoMesComoInactivo(clienteToArchive.id);
+
+      // 3️⃣ Actualizar estado local
       setClientes(
         clientes.map((c) =>
           c.id === clienteToArchive.id ? { ...c, estado: "Inactivo" } : c
         )
       );
+
       setShowConfirm(false);
       setClienteToArchive(null);
     } catch (error) {
@@ -405,6 +454,7 @@ export default function ClientesCompacto() {
       console.error("Error al archivar cliente:", error);
     }
   };
+
   // 📥 Importar Excel
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];

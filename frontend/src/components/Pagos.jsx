@@ -400,9 +400,6 @@ export default function Pagos() {
       };
     })
     .filter((p) => {
-      // Excluir pagos cuyo cliente no esté Activo
-      const cliente = getClientById(p.clienteId);
-      if (!cliente || (cliente.estado || "").toLowerCase() !== "activo") return false;
 
       // búsqueda
       const term = search.trim().toLowerCase();
@@ -1385,14 +1382,13 @@ export default function Pagos() {
                     <td>
                       <Badge
                         bg={
-                          (p.estatus || p.estado || "").toLowerCase() === "pagado"
-                            ? "success"
-                            : (p.estatus || p.estado || "").toLowerCase() === "pendiente"
-                              ? "warning"
-                              : "danger"
+                          p.estatus === "Pagado" ? "success" :
+                          p.estatus === "Pendiente" ? "warning" :
+                          p.estatus === "Inactivo" ? "secondary" :
+                          "danger"
                         }
                       >
-                        {p.estatus || p.estado}
+                        {p.estatus}
                       </Badge>
                     </td>
                     <td className="text-center">
