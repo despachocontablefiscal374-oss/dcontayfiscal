@@ -78,7 +78,7 @@ export default function Panel() {
   //const [selectedMonth, setSelectedMonth] = useState("Todos"); // "Todos" o 1..12
   const [granularidad, setGranularidad] = useState("Mensual"); // Diario, Semanal, Mensual
   const [monthFilter, setMonthFilter] = useState("");
-  const [selectedYear, setSelectedYear] = useState("2025");
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState("Todos");
   const [exportFormat, setExportFormat] = useState("excel");
   const [exportFilter, setExportFilter] = useState("todos");
@@ -112,15 +112,15 @@ export default function Panel() {
 
   useEffect(() => {
     if (!monthFilter) {
-      // Si NO hay mes seleccionado -> año completo
+      // Año actual por defecto
       setSelectedMonth("Todos");
-      setSelectedYear("2025"); // o año actual
+      setSelectedYear(currentYear);
     } else {
       const [year, month] = monthFilter.split("-");
-      setSelectedYear(year);
-      setSelectedMonth(String(Number(month))); // convierte "08" → "8"
+      setSelectedYear(Number(year));
+      setSelectedMonth(String(Number(month)));
     }
-  }, [monthFilter]);
+  }, [monthFilter, currentYear]);
 
   // cargar colecciones en tiempo real
   useEffect(() => {
