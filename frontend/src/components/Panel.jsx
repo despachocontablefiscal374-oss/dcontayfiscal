@@ -102,10 +102,6 @@ export default function Panel() {
     });
   };
 
-  const openConfirm = ({ title, message, onConfirm }) => {
-    setConfirmModal({ title, message, onConfirm });
-  };
-
   const openNotify = (message, type = "info") => {
     setNotifyModal({ message, type });
   };
@@ -519,6 +515,11 @@ export default function Panel() {
         if (enviandoCorreos) return;
 
         setEnviandoCorreos(true);
+        
+        toast.info("Enviando correos, por favor espera...", {
+            autoClose: false,
+            toastId: "sending-mails"
+          });
 
         try {
           for (const pago of proximos) {
@@ -533,7 +534,8 @@ export default function Panel() {
               }),
             });
           }
-
+          
+          toast.dismiss("sending-mails");
           toast.success("Recordatorios enviados correctamente");
         } catch (err) {
           console.error(err);
@@ -559,6 +561,11 @@ export default function Panel() {
         if (enviandoCorreos) return;
 
         setEnviandoCorreos(true);
+        
+        toast.info("Enviando correos, por favor espera...", {
+            autoClose: false,
+            toastId: "sending-mails"
+          });
 
         try {
           for (const pago of pagosVencidos) {
@@ -573,7 +580,8 @@ export default function Panel() {
               }),
             });
           }
-
+          
+          toast.dismiss("sending-mails");
           toast.success("Avisos de vencimiento enviados");
         } catch (err) {
           console.error(err);
@@ -962,27 +970,6 @@ export default function Panel() {
           </Col>
         </Row>
 
-        <Modal show={!!confirmModal} onHide={() => setConfirmModal(null)} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>{confirmModal?.title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>{confirmModal?.message}</Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setConfirmModal(null)}>
-              Cancelar
-            </Button>
-            <Button
-              variant="success"
-              onClick={async () => {
-                await confirmModal.onConfirm();
-                setConfirmModal(null);
-              }}
-            >
-              Confirmar
-            </Button>
-          </Modal.Footer>
-        </Modal>
-
         <ToastContainer position="top-center" className="mt-5">
           <Toast
             show={confirmToast.show}
@@ -1011,8 +998,11 @@ export default function Panel() {
                   size="sm"
                   variant={confirmToast.variant}
                   onClick={async () => {
+                    // 1️⃣ cerrar inmediatamente
+                    setConfirmToast(prev => ({ ...prev, show: false }));
+
+                    // 2️⃣ ejecutar acción en segundo plano
                     await confirmToast.onConfirm?.();
-                    setConfirmToast({ ...confirmToast, show: false });
                   }}
                 >
                   Confirmar
