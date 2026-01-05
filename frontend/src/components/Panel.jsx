@@ -122,6 +122,22 @@ export default function Panel() {
     }
   }, [monthFilter, currentYear]);
 
+  const clientesMap = useMemo(() => {
+    const map = {};
+    clientes.forEach(c => {
+      map[c.id] = c;
+    });
+    return map;
+  }, [clientes]);
+
+  //
+  const pagosValidos = useMemo(() => {
+    return pagos.filter(p => {
+      const cliente = clientesMap[p.clienteId];
+      return cliente && cliente.estado === "Activo";
+    });
+  }, [pagos, clientesMap]);
+
   // cargar colecciones en tiempo real
   useEffect(() => {
     const unsubC = onSnapshot(collection(db, "clientes"), (snap) => {
@@ -149,17 +165,9 @@ export default function Panel() {
     };
   }, []);
 
-  const clientesMap = useMemo(() => {
-    const map = {};
-    clientes.forEach(c => {
-      map[c.id] = c;
-    });
-    return map;
-  }, [clientes]);
-
   // UTIL: filtrar pagos por mes/año seleccionados (si month="Todos" devolvemos todo el año)
   const pagosFiltrados = useMemo(() => {
-    return pagos.filter((p) => {
+    return pagosValidos.filter((p) => {
       // si no tiene mes, intentar deducir de fechaVencimiento o fechaPago
       let mesField = p.mes || "";
       if (!mesField) {
@@ -176,7 +184,7 @@ export default function Panel() {
       if (selectedMonth === "Todos") return true;
       return mesPago === Number(selectedMonth);
     });
-  }, [pagos, selectedYear, selectedMonth]);
+  }, [pagosValidos, selectedYear, selectedMonth]);
 
   // Totales (todos los meses del filtro)
   const totals = useMemo(() => {
@@ -217,7 +225,7 @@ export default function Panel() {
     const mesToCheck = selectedMonth === "Todos" ? String(today.getMonth() + 1).padStart(2, "0") : String(selectedMonth).padStart(2, "0");
     const añoToCheck = selectedMonth === "Todos" ? today.getFullYear() : Number(selectedYear);
 
-    const pagosMes = pagos.filter((p) => {
+    const pagosMes = pagosValidos.filter((p) => {
       let mesField = p.mes || "";
       if (!mesField) {
         const fv = parseDate(p.fechaVencimiento) || parseDate(p.fechaPago);
@@ -230,7 +238,7 @@ export default function Panel() {
 
     const total = pagosMes.reduce((s, it) => s + Number(it.monto || 0), 0);
     return total;
-  }, [pagos, selectedMonth, selectedYear]);
+  }, [pagosValidos, selectedMonth, selectedYear]);
 
   // ==========================================
   // TENDENCIAS DE INGRESOS (CORREGIDO)
@@ -252,7 +260,7 @@ export default function Panel() {
 
         const data = labels.map((_, dayIndex) => {
           const d = dayIndex + 1;
-          return pagos
+          return pagosValidos
             .filter((p) => {
               const fp = parseDate(p.fechaPago);
               if (!fp) return false;
@@ -295,7 +303,7 @@ export default function Panel() {
         }
 
         const data = semanas.map((sem) => {
-          return pagos
+          return pagosValidos
             .filter((p) => {
               const fp = parseDate(p.fechaPago);
               if (!fp) return false;
@@ -331,7 +339,7 @@ export default function Panel() {
     // =====================
     const meses = Array.from({ length: 12 }, (_, i) => {
       const key = `${selectedYear}-${String(i + 1).padStart(2, "0")}`;
-      const total = pagos
+      const total = pagosValidos
         .filter((p) => {
           const mesField = p.mes || (() => {
             const fv = parseDate(p.fechaVencimiento) || parseDate(p.fechaPago);
@@ -357,7 +365,7 @@ export default function Panel() {
         },
       ],
     };
-  }, [pagos, selectedMonth, selectedYear, granularidad]);
+  }, [pagosValidos, selectedMonth, selectedYear, granularidad]);
 
   // Pie data con colores solicitados
   const pagosPagadosCount = pagosFiltrados.filter(
@@ -419,7 +427,7 @@ export default function Panel() {
   };
 
   // Próximos pagos (7 días) en contexto del filtro (si month=Todos -> buscar próximos 7 días en cualquier mes/año)
-  const proximos = pagos.filter((p) => {
+  const proximos = pagosValidos.filter((p) => {
     const fv = parseDate(p.fechaVencimiento);
     if (!fv) return false;
     const diff = (fv - new Date()) / (1000 * 60 * 60 * 24);
@@ -478,7 +486,7 @@ export default function Panel() {
   // años disponibles (tomados de pagos.mes)
   const availableYears = useMemo(() => {
     const setY = new Set();
-    pagos.forEach((p) => {
+    pagosValidos.forEach((p) => {
       const mesField = p.mes || (() => {
         const fv = parseDate(p.fechaVencimiento) || parseDate(p.fechaPago);
         return fv ? `${fv.getFullYear()}-${String(fv.getMonth() + 1).padStart(2, "0")}` : "";
@@ -488,7 +496,7 @@ export default function Panel() {
     const arr = Array.from(setY).sort((a, b) => b - a);
     if (!arr.includes(currentYear)) arr.unshift(currentYear);
     return arr;
-  }, [pagos, currentYear]);
+  }, [pagosValidos, currentYear]);
 
   // etiqueta del periodo mostrado (debajo del título)
   const periodoLabel = useMemo(() => {
@@ -591,8 +599,8 @@ export default function Panel() {
           `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   };
 
-  const mapRows = (pagos) =>
-    pagos.map(p => ([
+  const mapRows = (pagosValidos) =>
+    pagosValidos.map(p => ([
       clientesMap[p.clienteId]?.nombre || "—",
       p.numeroFactura || "—",
       p.monto
@@ -608,7 +616,7 @@ export default function Panel() {
   const handleExport = () => {
     let source = exportFilter === "mes"
       ? [...pagosFiltrados]
-      : [...pagos];
+      : [...pagosValidos];
 
     if (exportFormat === "excel") {
       exportAnalisisToExcel(source);
@@ -617,8 +625,8 @@ export default function Panel() {
     }
   };
 
-  const exportAnalisisToExcel = (pagos) => {
-    const data = pagos.map(p => ({
+  const exportAnalisisToExcel = (pagosValidos) => {
+    const data = pagosValidos.map(p => ({
       Cliente: clientesMap[p.clienteId]?.nombre || "",
       Factura: p.numeroFactura || "",
       Monto: p.monto || 0,
@@ -637,7 +645,7 @@ export default function Panel() {
     );
   };
 
-  const exportPagosToPDF = (pagos) => {
+  const exportPagosToPDF = (pagosValidos) => {
     const doc = new jsPDF("p", "mm", "a4");
 
     const tableColumns = [
@@ -648,7 +656,7 @@ export default function Panel() {
       "Estatus"
     ];
 
-    const tableRows = pagos.map(p => [
+    const tableRows = pagosValidos.map(p => [
       clientesMap[p.clienteId]?.nombre || "",
       p.numeroFactura || "",
       `$${p.monto}`,
