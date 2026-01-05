@@ -98,7 +98,6 @@ export default function ClientesCompacto() {
       Estado: cliente.estado || "",
       Teléfono: cliente.telefono || "",
       "Régimen Fiscal": cliente.regimenFiscal || "",
-      "Método de Pago": cliente.metodoPago || "",
       Notas: cliente.notas || "",
     }));
 
