@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./components/Login";
 import RegistrarAsistente from "./components/RegistrarAsistente";
 import Dashboard from "./components/Dashboard";
@@ -12,6 +12,42 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+function AppRoutes({ user, onLogin, onLogout }) {
+  const location = useLocation();
+
+  // 👉 Guarda la ruta si NO hay sesión
+  useEffect(() => {
+    if (!user && location.pathname !== "/") {
+      localStorage.setItem("redirectAfterLogin", location.pathname);
+    }
+  }, [user, location]);
+
+  if (!user) {
+    return <Login onLogin={onLogin} />;
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/dashboard"
+        element={<Dashboard onLogout={onLogout} role={user.rol} user={user} />}
+      />
+
+      {user.rol === "admin" && (
+        <Route path="/registrar-asistente" element={<RegistrarAsistente />} />
+      )}
+
+      <Route path="/panel" element={<Panel />} />
+      <Route path="/pagos" element={<Pagos />} />
+      <Route path="/recordatorios" element={<Recordatorios />} />
+      <Route path="/clientes" element={<ClientesCompacto />} />
+
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+
 function App() {
   const [user, setUser] = useState(null);
 
@@ -23,58 +59,19 @@ function App() {
     setUser(null);
   };
 
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
   return (
     <Router>
-      <>
-        <Routes>
-          {!user ? (
-            <Route path="*" element={<Login onLogin={handleLogin} />} />
-          ) : (
-            <>
-              <Route
-                path="/dashboard"
-                element={
-                  <Dashboard
-                    onLogout={handleLogout}
-                    role={user.rol}
-                    user={user}
-                  />
-                }
-              />
+      <AppRoutes user={user} onLogin={handleLogin} onLogout={handleLogout} />
 
-              {/* Solo ADMIN */}
-              {user.rol === "admin" && (
-                <Route
-                  path="/registrar-asistente"
-                  element={<RegistrarAsistente />}
-                />
-              )}
-
-              <Route path="/panel" element={<Panel />} />
-              <Route path="/pagos" element={<Pagos />} />
-              <Route path="/recordatorios" element={<Recordatorios />} />
-              <Route path="/clientes-compacto" element={<ClientesCompacto />} />
-
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            </>
-          )}
-        </Routes>
-
-        {/* 🔔 Toasts globales */}
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          pauseOnHover
-          draggable
-        />
-      </>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </Router>
   );
 }

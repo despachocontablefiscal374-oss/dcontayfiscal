@@ -1016,7 +1016,6 @@ export default function ClientesCompacto() {
           </Form>
         </Offcanvas.Body>
       </Offcanvas>
-
     </>
   );
 }

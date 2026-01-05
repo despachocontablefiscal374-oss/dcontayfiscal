@@ -115,7 +115,7 @@ function Dashboard({ onLogout, role }) {
             <Card
               className="stats-card dashboard-card h-100 border-0"
               style={{ cursor: "pointer" }}
-              onClick={() => navigate("/clientes-compacto")}
+              onClick={() => navigate("/clientes")}
             >
               <Card.Body>
                 <div className="d-flex justify-content-between align-items-center">
@@ -218,7 +218,7 @@ function Dashboard({ onLogout, role }) {
               <Card.Body>
                 <h5 className="fw-bold">Gestión de clientes</h5>
                 <p className="text-muted">Registre, vea y administre la información del cliente</p>
-                <Button onClick={() => navigate("/clientes-compacto")}>Ir a clientes</Button>
+                <Button onClick={() => navigate("/clientes")}>Ir a clientes</Button>
               </Card.Body>
             </Card>
           </Col>

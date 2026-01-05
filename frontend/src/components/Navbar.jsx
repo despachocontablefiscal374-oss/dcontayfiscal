@@ -29,7 +29,7 @@ export default function Navbar({ role }) {
           <Home size={18} /> Dashboard
         </button>
 
-        <button onClick={() => navigate("/clientes-compacto")} className="nav-btn">
+        <button onClick={() => navigate("/clientes")} className="nav-btn">
           <Users size={18} /> Clientes
         </button>
 
