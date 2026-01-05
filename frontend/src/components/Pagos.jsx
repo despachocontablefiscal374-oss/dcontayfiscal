@@ -47,24 +47,17 @@ export default function Pagos() {
         setStatusFilter("Pendiente");
         break;
       case "vencido":
-        setStatusFilter("Vencido"); // o "Vencido", según como los guardes
+        setStatusFilter("Vencido");
         break;
       default:
         setStatusFilter("Todos los estatus");
         break;
     }
-
-    // Reinicia la página al 1 para que no quede en una paginación vieja
     setCurrentPage(1);
   };
 
-  // --------------------------
-  // Estados principales
-  // --------------------------
   const [clientes, setClientes] = useState([]); // todos los clientes
   const [pagos, setPagos] = useState([]);
-
-  // filtros / búsqueda / paginación
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos los estatus");
   const [monthFilter, setMonthFilter] = useState("");
@@ -85,25 +78,19 @@ export default function Pagos() {
   const [exportFilter, setExportFilter] = useState("todos");
 
   const [showFormModal, setShowFormModal] = useState(false);
-  const [editingPago, setEditingPago] = useState(null); // si tiene valor -> estamos editando
-  const [originalStatus, setOriginalStatus] = useState(null); // para bloquear cambios si original fue "Pagado"
-  const [statusLocked, setStatusLocked] = useState(false); // bloqueo del select de estado
-
+  const [editingPago, setEditingPago] = useState(null); 
+  const [originalStatus, setOriginalStatus] = useState(null);
+  const [statusLocked, setStatusLocked] = useState(false); 
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewPago, setViewPago] = useState(null);
-
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [pagoToDelete, setPagoToDelete] = useState(null);
-
   const [message, setMessage] = useState(null);
   const { setError } = useError();
   const [toastError, setToastError] = useState("");
   const [showDeleteInfo, setShowDeleteInfo] = useState(false);
+  const [duplicateAlert, setDuplicateAlert] = useState("");
 
-  // alert duplicado dentro del modal
-  const [duplicateAlert, setDuplicateAlert] = useState(""); // mensaje de error cuando existe pago en mismo mes
-
-  // mostrar los pagos (o clientes) del mes actual o de otro mes
   const [mesSeleccionado, setMesSeleccionado] = useState(() => {
     const fecha = new Date();
     const mes = String(fecha.getMonth() + 1).padStart(2, "0");
@@ -135,9 +122,7 @@ export default function Pagos() {
   // flag para generación inicial de pagos (evitar múltiple ejecución)
   const generatedInitialRef = useRef(false);
 
-  // ---------------------------
   // Historial modal state
-  // ---------------------------
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyClient, setHistoryClient] = useState(null);
   const [historyPayments, setHistoryPayments] = useState([]);
@@ -149,9 +134,7 @@ export default function Pagos() {
     }
   };
 
-  // ---------------------------------------
   // Cargar clientes y pagos (real-time desde Firestore)
-  // ---------------------------------------
   useEffect(() => {
     const clientesRef = collection(db, "clientes");
     const unsubClientes = onSnapshot(clientesRef, (snap) => {
@@ -165,7 +148,6 @@ export default function Pagos() {
       setPagos(arr);
     });
 
-    // Para pagos atrasados — observador que marca atrasados
     const unsubAtrasos = onSnapshot(pagosRef, async (snapshot) => {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
@@ -174,7 +156,6 @@ export default function Pagos() {
         const data = docSnap.data();
         const pagoId = docSnap.id;
 
-        // ⛔ Nunca tocar pagos pagados
         if ((data.estatus || "").toLowerCase() === "pagado") continue;
         if (!data.fechaVencimiento) continue;
 
@@ -191,13 +172,12 @@ export default function Pagos() {
         if (!fechaVenc || isNaN(fechaVenc)) continue;
         fechaVenc.setHours(0, 0, 0, 0);
 
-        // Fecha límite = vencimiento + 3 días
         const fechaLimite = new Date(fechaVenc);
         fechaLimite.setDate(fechaLimite.getDate() + 3);
 
         const estaVencido = hoy > fechaLimite;
 
-        // 🔁 CAMBIO DE ESTADO SOLO SI ES NECESARIO
+        // CAMBIO DE ESTADO SOLO SI ES NECESARIO
         if (estaVencido && data.estatus !== "Vencido") {
           await updateDoc(doc(db, "pagos", pagoId), { estatus: "Vencido" });
         }
@@ -215,9 +195,7 @@ export default function Pagos() {
     };
   }, []);
 
-  // ---------------------------------------
   // Utilidades
-  // ---------------------------------------
   const formatCurrency = (v) => {
     const n = Number(v || 0);
     return n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -242,14 +220,12 @@ export default function Pagos() {
     return new Date().toISOString().slice(0, 10);
   };
 
-  // función para calcular fecha de vencimiento automática:
   const calcularFechaVencimientoAuto = () => {
     const hoy = new Date();
     const dia = hoy.getDate();
     let year = hoy.getFullYear();
     let month = hoy.getMonth(); // 0-indexed
 
-    // Si ya pasó el día 17, generar para el siguiente mes
     if (dia > 17) {
       month += 1;
       if (month > 11) {
@@ -262,18 +238,15 @@ export default function Pagos() {
     return `${year}-${mm}-${dd}`;
   };
 
-  // Obtener cliente por id
+
   const getClientById = (id) => clientes.find((c) => c.id === id) || null;
 
-  // Mostrar nombre + email
   const getClientDisplay = (id) => {
     const c = getClientById(id);
     return c ? `${c.nombre}${c.email ? " - " + c.email : ""}` : "Cliente no encontrado";
   };
 
-  // ---------------------------------------
   // Generar prefijo numero factura según régimen
-  // ---------------------------------------
   const normalizar = (texto) =>
     texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -291,7 +264,6 @@ export default function Pagos() {
     return "XX";
   };
 
-  // 🔹 versión que usa los pagos ya cargados del estado (para manuales)
   const generarNumeroFacturaManual = (clienteId) => {
     const cliente = getClientById(clienteId);
     if (!cliente) return "XX00";
@@ -306,7 +278,6 @@ export default function Pagos() {
     return `${prefix}${String(next).padStart(2, "0")}`;
   };
 
-  // 🔹 versión para generación automática (usa snapshot Firestore)
   const generarNumeroFacturaAuto = (cliente, pagosExistentes) => {
     const regimen = cliente?.regimenFiscal || "";
     const prefix = regimenPrefix(regimen);
@@ -319,9 +290,7 @@ export default function Pagos() {
     return `${prefix}${String(next).padStart(2, "0")}`;
   };
 
-  //*--------------------------------
   // GENERAR REGISTROS DE PAGOS AL INICIO DE MES
-  //------------------
   const generadoRef = useRef(false);
   useEffect(() => {
     const generarPagosDelMes = async () => {
@@ -378,17 +347,15 @@ export default function Pagos() {
 
         await addDoc(pagosRef, nuevoPago);
         pagosExistentes.push(nuevoPago);
-        //console.log(`✅ Pago generado para ${cliente.nombre} (${numeroFactura})`);
       }
 
-      console.log("🟩 Pagos del mes creados exitosamente.");
+      //console.log("Pagos del mes creados exitosamente.");
     };
 
     generarPagosDelMes();
   }, []);
-  // ---------------------------------------
+
   // Filtrado y paginación (ajustado a requisitos)
-  // ---------------------------------------
   const mesActual = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
 
   //const filteredPagos = pagos
@@ -445,9 +412,7 @@ export default function Pagos() {
   const indexOfFirst = indexOfLast - entriesPerPage;
   const currentPagos = filteredPagos.slice(indexOfFirst, indexOfLast);
 
-  // ---------------------------------------
   // Estadísticas en tiempo real pagos
-  // ---------------------------------------
   const [anioSeleccionado, mesSeleccionadoNum] = mesSeleccionado
     .split("-")
     .map(Number);
@@ -480,10 +445,7 @@ export default function Pagos() {
     };
   }, [filteredPagos]);
 
-  // ---------------------------------------
   // CRUD / Form handling
-  // ---------------------------------------
-
   // abrir modal nuevo pago
   const openNewPagoModal = () => {
     setEditingPago(null);
@@ -533,7 +495,6 @@ export default function Pagos() {
 
   // Autocompletado: filtra clientes activos por nombre o email
   useEffect(() => {
-    // 🚫 NO mostrar sugerencias si estamos editando un pago
     if (editingPago) {
       setClienteSuggestions([]);
       return;
@@ -577,7 +538,6 @@ export default function Pagos() {
     return () => document.removeEventListener("click", onDocClick);
   }, []);
 
-  // seleccionar cliente desde sugerencias
   const handleClienteSelect = (cliente) => {
     setFormData((s) => ({ ...s, clienteId: cliente.id }));
     setClienteQuery(cliente.nombre);
@@ -620,9 +580,7 @@ export default function Pagos() {
     setFormData((s) => ({ ...s, [name]: value }));
   };
 
-  // ---------------------------------------
   // Validación: comprobar si existe pago para mismo cliente y mismo mes
-  // ---------------------------------------
   const checkPagoExistente = async (clienteId, fechaVencimiento, currentPagoId = null) => {
     if (!clienteId || !fechaVencimiento) return false;
 
@@ -655,7 +613,6 @@ export default function Pagos() {
     e.preventDefault();
 
     if (!formData.clienteId) {
-      //alert("Selecciona un cliente válido (usa el autocompletado).");
       toast.warning("Selecciona un cliente válido (usa el autocompletado)");
       return;
     }
@@ -666,13 +623,11 @@ export default function Pagos() {
       return;
     }
     if (!formData.fechaVencimiento) {
-      //alert("La fecha de vencimiento se asigna automáticamente y no puede dejarse vacía.");
       toast.info("La fecha de vencimiento se asigna automáticamente y no puede dejarse vacía");
       return;
     }
 
     if ((formData.estatus || "").toLowerCase() === "pagado" && !formData.metodoPago) {
-      //alert("Cuando el estado es 'Pagado', el método de pago es obligatorio.");
       toast.warning("Cuando el estado es 'Pagado', el método de pago es obligatorio");
       return;
     }
@@ -719,9 +674,7 @@ export default function Pagos() {
 
         const ref = doc(db, "pagos", editingPago.id);
         await updateDoc(ref, payload);
-        // =============================
-        // 🟢 ENVIAR EMAIL SI SE PAGÓ
-        // =============================
+        // ENVIAR EMAIL SI SE PAGÓ
         if ((payload.estatus || "").toLowerCase() === "pagado") {
           await fetch(`${API_URL}/api/send-reminder`, {
             method: "POST",
@@ -741,9 +694,7 @@ export default function Pagos() {
         if ((payload.estatus || "").toLowerCase() === "pagado" && !payload.fechaPago) payload.fechaPago = todayYYYYMMDD();
 
         await addDoc(collection(db, "pagos"), payload);
-        // =============================
-        // 🟢 ENVIAR EMAIL SI SE PAGÓ
-        // =============================
+        // ENVIAR EMAIL SI SE PAGÓ
         if ((payload.estatus || "").toLowerCase() === "pagado") {
           await fetch(`${API_URL}/api/send-reminder`, {
             method: "POST",
@@ -784,8 +735,6 @@ export default function Pagos() {
       setShowConfirmDelete(false);
       setPagoToDelete(null);
     } catch (err) {
-      //console.error("Error eliminando pago:", err);
-      //alert("No se pudo eliminar el pago.");
       toast.error("No se pudo eliminar el pago");
     }
   };
@@ -796,9 +745,7 @@ export default function Pagos() {
     setShowViewModal(true);
   };
 
-  // -------------------------
-  // Historial: abrir modal
-  // -------------------------
+  // Historial
   const openHistoryModal = (clienteId) => {
     const cliente = getClientById(clienteId) || {};
     setHistoryClient(cliente);
@@ -823,9 +770,7 @@ export default function Pagos() {
     setShowHistoryModal(true);
   };
 
-  // ---------------------------------------
   // Exportar Excel / PDF (global)
-  // ---------------------------------------
   const getFormattedDateTime = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -837,7 +782,6 @@ export default function Pagos() {
   };
 
   const handleExport = () => {
-    // 🔹 Aplicar filtro según selección del usuario
     let dataFiltrada = [...filteredPagos];
 
     if (exportFilter === "pagado") {
@@ -881,7 +825,6 @@ export default function Pagos() {
   };
 
   const exportToPDF = (rows, filename = null) => {
-    // 🔥 REGISTRAR FUENTE UTF-8
     const doc2 = new jsPDF("landscape", "mm", "a4");
     doc2.setFont("helvetica", "normal");
 
@@ -962,12 +905,8 @@ export default function Pagos() {
     doc2.save(filename || `pagos_${getFormattedDateTime()}.pdf`);
   };
 
-  // ---------------------------------------
   // Clasificación de pagos (individual y cliente)
-  // ---------------------------------------
-  // Clasifica un pago individual según fechaVencimiento vs fechaPago
   const classifySinglePayment = (p) => {
-    // p.fechaVencimiento / p.fechaPago pueden venir en varios formatos
     if (!p || !p.fechaVencimiento) return "Pendiente";
     const vencStr = parseDateForInput(p.fechaVencimiento);
     const pagoStr = parseDateForInput(p.fechaPago);
@@ -980,7 +919,6 @@ export default function Pagos() {
     if (pagoDate < vencDate) return "Cumplido";
 
     // Si pagó entre el día 17 y 19 inclusive (consideramos el margen)
-    // Note: para seguridad extra, comparamos con día del mes de la fecha de pago
     const diaPago = pagoDate.getDate();
     const diaVenc = vencDate.getDate(); // típicamente 17
     // Si la fecha de pago coincide con la fecha de vencimiento o día 18-19 => Puntual
@@ -989,13 +927,12 @@ export default function Pagos() {
     // Si pagó después del día 20 => Moroso
     if (diaPago >= 20 || pagoDate > vencDate) {
       // si la diferencia en días es > 0 y díaPago >= 20
-      // También consideramos pagos en meses posteriores como morosos
       const diffDays = Math.floor((pagoDate - vencDate) / (1000 * 60 * 60 * 24));
       if (diffDays >= 0) return "Moroso";
     }
 
-    // Por defecto, si no cumple ninguna, conservamos "Puntual"
-    return "Puntual";
+    // Por defecto, si no cumple ninguna, conservamos "Moroso"
+    return "Moroso";
   };
 
   // Dado un array de pagos del cliente, devuelve conteos y clasificación general
@@ -1008,10 +945,6 @@ export default function Pagos() {
       else counts.Pendiente++;
     });
 
-    // Reglas de decisión:
-    // - Si existe al menos 1 Moroso o Pendiente -> Cliente Moroso
-    // - Else if existe mezcla de Cumplido y Puntual (y >0) -> Cliente Puntual
-    // - Else if todos o la mayoría son Cumplido -> Cliente Cumplido
     let general = "Cumplido";
     if (counts.Moroso > 0 || counts.Pendiente > 0) general = "Moroso";
     else {
@@ -1025,9 +958,7 @@ export default function Pagos() {
     return { counts, general };
   };
 
-  // ---------------------------------------
   // Exportar historial del cliente (PDF horizontal + Excel)
-  // ---------------------------------------
   const exportClientHistoryExcel = (payments, cliente, filename = null) => {
     const rows = (payments || []).map((p) => ({
       "Fecha de vencimiento": p.fechaVencimiento ? parseDateForInput(p.fechaVencimiento) : "",
@@ -1162,14 +1093,6 @@ export default function Pagos() {
     doc2.save(filename || `historial_${cliente?.nombre || "cliente"}_${getFormattedDateTime()}.pdf`);
   };
 
-  /*
-  const handleDeleteBlocked = () => {
-    alert(
-      "🚫 Acción no permitida.\n\n" +
-      "Los registros de pagos no pueden eliminarse por motivos de seguridad y control contable."
-    );
-  };
-  */
  const handleDeleteBlocked = () => {
     toast.error(
       "🚫 Acción no permitida.\nLos registros de pagos no pueden eliminarse por motivos de seguridad y control contable.",
@@ -1177,11 +1100,7 @@ export default function Pagos() {
     );
   };
 
-  //console.log("Pagos actuales:", pagos);
-
-  // ---------------------------------------
   // Render
-  // ---------------------------------------
   return (
     <>
       <Navbar />

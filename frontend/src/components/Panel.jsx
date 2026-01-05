@@ -751,20 +751,6 @@ export default function Panel() {
       y += 50;
     }
 
-    /*if (lineImg) {
-      doc.text("Tendencia de Ingresos", 15, y);
-      y += 5;
-      doc.addImage(lineImg, "PNG", 15, y, 180, 60);
-      y += 70;
-    }
-
-    if (pieImg) {
-      doc.text("Distribución de Pagos", 15, y);
-      y += 5;
-      doc.addImage(pieImg, "PNG", 50, y, 100, 60);
-      y += 70;
-    }*/
-
     console.log("Pendientes:", pagosPendientes);
     console.log("Vencidos:", pagosVencidos);
     console.log("Próximos:", proximos);
@@ -820,6 +806,28 @@ export default function Panel() {
     }
 
     doc.save(`analisis_${getFormattedDateTime()}.pdf`);
+  };
+
+  const renderEstatusBadge = (p) => {
+    const estatus = (p.estatus || "").toLowerCase();
+
+    if (estatus === "inactivo") {
+      return <Badge bg="secondary">Inactivo</Badge>;
+    }
+
+    if (estatus === "vencido") {
+      return <Badge bg="danger">Atrasado</Badge>;
+    }
+
+    if (estatus === "pendiente") {
+      return <Badge bg="warning" text="dark">Pendiente</Badge>;
+    }
+
+    if (estatus === "pagado") {
+      return <Badge bg="success">Pagado</Badge>;
+    }
+
+    return <Badge bg="dark">Desconocido</Badge>;
   };
 
 
@@ -988,7 +996,7 @@ export default function Panel() {
                         <td>{clientesMap[p.clienteId]?.nombre || "N/A"}</td>
                         <td className="text-warning">${Number(p.monto || 0).toLocaleString()}</td>
                         <td>
-                          <Badge bg="warning" className="text-write">Pendientes</Badge>
+                          {renderEstatusBadge(p)}
                         </td>
                       </tr>
                     ))}
@@ -1101,7 +1109,7 @@ export default function Panel() {
                         {getMes(p.fechaVencimiento)}
                       </td>
                       <td>
-                        <Badge bg="danger">Atrasados</Badge>
+                        {renderEstatusBadge(p)}
                       </td>
                     </tr>
                   );
