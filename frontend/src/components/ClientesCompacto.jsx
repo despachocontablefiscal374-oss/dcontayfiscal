@@ -357,6 +357,9 @@ export default function ClientesCompacto() {
           formData.estado === "Activo"
         ) {
           dataToUpdate.fechaReactivacion = new Date();
+
+          // 🔁 Reactivar pago del mes actual
+          await reactivarPagoMesActual(editingCliente.id);
         }
 
         const docRef = doc(db, "clientes", editingCliente.id);
