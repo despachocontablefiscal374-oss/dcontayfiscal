@@ -3,7 +3,7 @@ import { db, admin } from "../_firebase.js";
 
 /* ================= HELPERS ================= */
 
-export function parseFlexibleDate(value) {
+/*export function parseFlexibleDate(value) {
   if (!value) return null;
   if (typeof value === "object" && value.seconds)
     return new Date(value.seconds * 1000);
@@ -19,7 +19,33 @@ export function parseFlexibleDate(value) {
     if (!isNaN(maybe)) return maybe;
   }
   return null;
+}*/
+export function parseFlexibleDate(value) {
+  if (!value) return null;
+
+  // Firestore Timestamp
+  if (typeof value === "object" && value.seconds) {
+    const d = new Date(value.seconds * 1000);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  // Date nativo
+  if (value instanceof Date) {
+    const d = new Date(value);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  // 🔥 STRING yyyy-mm-dd → FECHA LOCAL REAL
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(y, m - 1, d); // ← LOCAL, sin UTC
+  }
+
+  return null;
 }
+
 
 export function dateToYMD(d) {
   const dt = new Date(d);
