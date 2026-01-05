@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       if (!fechaVenc) continue;
 
       // 🔥 CLAVE: normalizar fecha
-      fechaVenc.setHours(12, 0, 0, 0);
+      fechaVenc.setHours(0, 0, 0, 0);
 
       const diasAntes = daysDiff(hoy, fechaVenc);
       const diasDespues = daysDiff(fechaVenc, hoy);
