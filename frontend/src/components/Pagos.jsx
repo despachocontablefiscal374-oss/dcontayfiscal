@@ -29,6 +29,9 @@ export default function Pagos() {
       const hoy = new Date();
       const mesActual = hoy.toISOString().slice(0, 7);
       setMonthFilter(mesActual);
+    } 
+    else if (filtro === "inactivo") {
+      setStatusFilter("Inactivo");
     } else {
       setStatusFilter("Todos los estatus");
     }
@@ -1295,6 +1298,7 @@ export default function Pagos() {
                 <option>Pagado</option>
                 <option>Pendiente</option>
                 <option>Vencido</option>
+                <option>Inactivo</option>
               </Form.Select>
             </Col>
 

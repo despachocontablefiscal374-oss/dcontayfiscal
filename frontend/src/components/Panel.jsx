@@ -424,23 +424,52 @@ export default function Panel() {
 
   // Próximos pagos (7 días) en contexto del filtro (si month=Todos -> buscar próximos 7 días en cualquier mes/año)
   const proximos = pagosValidos.filter((p) => {
+    const cliente = clientesMap[p.clienteId];
+    if (!cliente) return false;
+
+    // ❌ cliente inactivo → no próximos
+    if (cliente.estado === "Inactivo") return false;
+
+    // ❌ pagos inactivos o sin monto
+    if (p.estatus === "Inactivo") return false;
+    if (Number(p.monto || 0) <= 0) return false;
+
     const fv = parseDate(p.fechaVencimiento);
     if (!fv) return false;
+
     const diff = (fv - new Date()) / (1000 * 60 * 60 * 24);
+
+    // solo próximos 7 días
     if (diff < 0 || diff > 7) return false;
+
     // respetar filtro año/mes
     if (selectedMonth !== "Todos") {
-      const [y, m] = (p.mes || `${fv.getFullYear()}-${String(fv.getMonth() + 1).padStart(2, "0")}`).split("-");
-      
-      return Number(y) === Number(selectedYear) && Number(m) === Number(selectedMonth);
+      const [y, m] = (p.mes ||
+        `${fv.getFullYear()}-${String(fv.getMonth() + 1).padStart(2, "0")}`
+      ).split("-");
+
+      return (
+        Number(y) === Number(selectedYear) &&
+        Number(m) === Number(selectedMonth)
+      );
     }
+
     return Number(fv.getFullYear()) === Number(selectedYear);
   });
 
+
   // pagos vencidos (según filtro)
-  const pagosVencidos = pagosFiltrados.filter(
-    (p) => (p.estatus || "").toLowerCase() === "vencido"
-  );
+  const pagosVencidos = pagosFiltrados.filter((p) => {
+    const monto = Number(p.monto || 0);
+
+    // caso normal
+    if ((p.estatus || "").toLowerCase() === "vencido") return true;
+
+    // 🔴 cliente inactivo con monto pendiente
+    if (p.estatus === "Inactivo" && monto > 0) return true;
+
+    return false;
+  });
 
   // pagos pendientes (según filtro)
   const pagosPendientes = pagosFiltrados.filter(
